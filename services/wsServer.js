@@ -2,31 +2,36 @@ import { Server, OPEN } from 'ws';
 import { rooms,connections } from '../utils/roomData.js';
 
 const wss = new Server({ port: 8080 });
-
+function groupMsg(roomUsers,type,message,ws){
+  roomUsers.forEach(user => {
+    if (user!==ws&&user.readyState === OPEN) {
+      user.send(JSON.stringify({
+        type,
+        message
+      }));
+    }
+  });
+}
 wss.on('connection', (ws) => {
     console.log('New client connected');
-    ws.send(JSON.stringify({room:"::global",user:"system",msg:"Welcome to WebSocket Server in Github Codespace! o(*￣▽￣*)ブ"}));
   
     ws.on('message', (message) => {
-      const { room, user, msg } = JSON.parse(message);
-      if (!rooms[room]) {
-        rooms[room] = [ws]; //create room
-        ws.send(JSON.stringify({room, user: "system", msg: `Created a new room: ${room}` }));
+      const {name,token,room,type,message} = JSON.parse(message);
+      if(!connections.has(token) || !rooms.has(room)){
+        ws.close(1008,JSON.stringify({room,token}));
+        return;
       }
-      else if (!rooms[room].includes(ws)) {
-        rooms[room].push(ws);
-        ws.send(JSON.stringify({room, user: "system", msg: `Welcome to the room: ${room}` }));
-        rooms[room].forEach(client => {
-          if (client !== ws && client.readyState === OPEN) {
-            client.send(JSON.stringify({room, user: "system", msg: `${user} has joined the room` }));
-          }
-        });
-      } else {
-        rooms[room].forEach(client => {
-          if (client.readyState === OPEN) {
-            client.send(JSON.stringify({room, user, msg }));
-          }
-        });
+      const roomUsers=rooms.get(room);
+      if (type == "chat") {
+        groupMsg(roomUsers,type,message,ws);
+      }else if(type=="leave"){
+        roomUsers.delete(ws);
+        groupMsg(roomUsers,type,name,ws);
+      }else if(type=="join"){
+        if(!roomUsers.has(ws)){
+          roomUsers.add(ws);
+          groupMsg(roomUsers,type,name,ws);
+        }
       }
     });
   
@@ -35,18 +40,16 @@ wss.on('connection', (ws) => {
       const statusDes=reason.toString();
       console.log(statusDes);
       try{
-        const { room, user } = JSON.parse(statusDes);
-      
-        //remove ws from room
-        if (rooms[room]) {
-          if (rooms[room].includes(ws)) {
-            rooms[room].forEach(client => {
-              if (client.readyState === OPEN) {
-                client.send(JSON.stringify({room, user: "system", msg: `${user} has left the room` }));
-              }
-            });
+        const { roomIds,name, token } = JSON.parse(statusDes);
+        roomIds.forEach(roomId => {
+          if(rooms.has(roomId)){
+            const roomUsers=rooms.get(roomId);
+            if (roomUsers.has(ws)) {
+              roomUsers.delete(ws);
+              groupMsg(roomUsers, "exit", name, ws);
+            }
           }
-        }
+        });
       }
       catch{
         return;

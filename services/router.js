@@ -43,4 +43,17 @@ router.post('/createRoom', (req, res) => {
         res.json({success:false,msg:"Room already exists"});
     }
 });
+router.post('/checkRoom', (req, res) => {
+    const {token,room}=req.body;
+    if(!connections.has(token)){
+        res.json({success:false,msg:"Invalid token"});
+        return;
+    }
+    if(rooms[room]){
+        res.json({success:true});
+    }
+    else{
+        res.json({success:false,msg:"Room does not exist"});
+    }
+});
 export default router;
