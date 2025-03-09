@@ -22,14 +22,14 @@ function verifySign(data,sign,pk){
     return isValid;
 }
 
-export function verify(uid,sign,rnd,token){
+export function verify(sign,token){
     const now = new Date();
     const year = now.getUTCFullYear();
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
     const day = String(now.getUTCDate()).padStart(2, '0');
     const formattedDate = `${year}${month}${day}`;
 
-    const pattern=uid+sign+rnd+formattedDate;
+    const pattern=sign+formattedDate;
     const data=Buffer.from(pattern,'utf8');
     return verifySign(data,Buffer.from(token,'base64'),readPublicKey());
 }
