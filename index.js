@@ -33,7 +33,7 @@ wss.on('connection', (ws) => {
 
     if (!roomUsers.includes(ws)) {   //check if the client is in the room
       roomUsers.push(ws);
-      groupMsg(roomUsers, type, `${name} joined the room`, ws,room,name,senderId);
+      groupMsg(roomUsers, 'join', `${name} joined the room`, ws,room,name,senderId);
     }
 
     if (type == "chat") {
@@ -57,12 +57,12 @@ wss.on('connection', (ws) => {
         if (roomUsers) {
           if (roomUsers[ws]) {
             roomUsers.slice(roomUsers.indexOf(ws), 1);
-            groupMsg(roomUsers, "leave", name, ws,roomId,name);
+            groupMsg(roomUsers, "leave", `${name} left the room`, ws,roomId,name,'system');
           }
         }
       });
     }
-    catch {
+    catch(e) {
       return;
     }
   });
