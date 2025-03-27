@@ -3,6 +3,7 @@
   "dependencies": {
     "ws": "^8.18.1",
     "express": "^4.17.1",
+    "express-ws":"5.0.2",
     "crypto": "^1.0.1"
   }
 }
